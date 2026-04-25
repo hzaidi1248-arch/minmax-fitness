@@ -7,11 +7,14 @@ import express from 'express';
 let cachedServer: any;
 
 export default async (req: any, res: any) => {
-  const expressApp = express();
-  const nestApp = await NestFactory.create(
-    AppModule,
-    new ExpressAdapter(expressApp),
-  );
-  await nestApp.init();
-  expressApp(req, res);
+  if (!cachedServer) {
+    const expressApp = express();
+    const nestApp = await NestFactory.create(
+      AppModule,
+      new ExpressAdapter(expressApp),
+    );
+    await nestApp.init();
+    cachedServer = expressApp;
+  }
+  cachedServer(req, res);
 };
