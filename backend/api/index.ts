@@ -6,7 +6,7 @@ import express from 'express';
 
 let cachedServer: any;
 
-export const handler = async (event: any, context: any, callback: any) => {
+export default async (req: any, res: any) => {
   if (!cachedServer) {
     const expressApp = express();
     const nestApp = await NestFactory.create(
@@ -14,9 +14,8 @@ export const handler = async (event: any, context: any, callback: any) => {
       new ExpressAdapter(expressApp),
     );
     
-    // Add any global pipes/filters here as in main.ts
     await nestApp.init();
     cachedServer = serverlessExpress({ app: expressApp });
   }
-  return cachedServer(event, context, callback);
+  return cachedServer(req, res);
 };
