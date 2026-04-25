@@ -17,7 +17,7 @@ import { useAuthStore } from '@core/auth/authStore';
 
 /** Base URL for the sync API. Configured via environment variable. */
 const SYNC_API_URL: string =
-  process.env.EXPO_PUBLIC_SYNC_API_URL ?? 'http://localhost:3000/api/sync';
+  process.env.EXPO_PUBLIC_SYNC_API_URL ?? 'https://minmax-fitness.vercel.app/sync';
 
 /**
  * Executes a full bidirectional sync cycle with the backend.
