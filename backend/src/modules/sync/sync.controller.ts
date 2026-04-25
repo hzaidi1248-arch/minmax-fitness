@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Query, UseGuards, Request, UseFilters } from '@nestjs/common';
-import { Throttle, UseGuards as UseThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { SyncService } from './sync.service';
 import { SyncPushDto } from './dto/sync.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -20,7 +20,7 @@ export class SyncController {
   }
 
   @Post()
-  @UseThrottlerGuard(UserIdThrottlerGuard)
+  @UseGuards(UserIdThrottlerGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async push(@Request() req: any, @Body() syncPushDto: SyncPushDto) {
     const userId = req.user.userId;
