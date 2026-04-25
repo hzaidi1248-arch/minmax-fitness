@@ -1,0 +1,165 @@
+// ─────────────────────────────────────────────────────────────────────
+// MinMax Fitness — Backend Prisma Schema
+// ─────────────────────────────────────────────────────────────────────
+// This schema mirrors the WatermelonDB client schema with full
+// referential integrity via PostgreSQL foreign keys. Every table
+// includes `created_at` and `updated_at` timestamps plus a
+// `last_modified_at` column used by the WatermelonDB sync protocol
+// to compute incremental change sets.
+// ─────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────
+
+enum SetType {
+  WARM_UP
+  WORKING
+}
+
+enum MuscleGroup {
+  QUADS
+  HAMSTRINGS
+  GLUTES
+  CHEST
+  BACK
+  SHOULDERS
+  BICEPS
+  TRICEPS
+  CALVES
+  FOREARMS
+  ABS
+}
+
+enum DaySplit {
+  FULL_BODY
+  UPPER
+  LOWER
+  ARMS_DELTS
+}
+
+// ─── Users ──────────────────────────────────────────────────────────
+
+model User {
+  id              String           @id @default(uuid()) @db.Uuid
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  lastModifiedAt  DateTime         @default(now()) @map("last_modified_at")
+  isDeleted       Boolean          @default(false) @map("is_deleted")
+
+  bodyweightLogs  BodyweightLog[]
+  workoutSessions WorkoutSession[]
+
+  @@map("users")
+}
+
+// ─── Bodyweight Logs ────────────────────────────────────────────────
+
+model BodyweightLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  weightLbs      Decimal  @map("weight_lbs") @db.Decimal(6, 2)
+  loggedAt       DateTime @map("logged_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  lastModifiedAt DateTime @default(now()) @map("last_modified_at")
+  isDeleted      Boolean  @default(false) @map("is_deleted")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([loggedAt])
+  @@map("bodyweight_logs")
+}
+
+// ─── Exercises (Master Dictionary) ──────────────────────────────────
+
+model Exercise {
+  id             String      @id @default(uuid()) @db.Uuid
+  name           String      @db.VarChar(120)
+  muscleGroup    MuscleGroup @map("muscle_group")
+  isCompound     Boolean     @default(false) @map("is_compound")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  lastModifiedAt DateTime    @default(now()) @map("last_modified_at")
+  isDeleted      Boolean     @default(false) @map("is_deleted")
+
+  setLogs SetLog[]
+
+  @@index([muscleGroup])
+  @@map("exercises")
+}
+
+// ─── Programs ───────────────────────────────────────────────────────
+
+model Program {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String   @db.VarChar(200)
+  durationWeeks  Int      @map("duration_weeks")
+  daysPerWeek    Int      @map("days_per_week")
+  description    String   @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  lastModifiedAt DateTime @default(now()) @map("last_modified_at")
+  isDeleted      Boolean  @default(false) @map("is_deleted")
+
+  workoutSessions WorkoutSession[]
+
+  @@map("programs")
+}
+
+// ─── Workout Sessions ───────────────────────────────────────────────
+
+model WorkoutSession {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  programId      String    @map("program_id") @db.Uuid
+  weekNumber     Int       @map("week_number")
+  dayNumber      Int       @map("day_number")
+  daySplit       DaySplit  @map("day_split")
+  completedAt    DateTime? @map("completed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  lastModifiedAt DateTime  @default(now()) @map("last_modified_at")
+  isDeleted      Boolean   @default(false) @map("is_deleted")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  setLogs SetLog[]
+
+  @@index([userId])
+  @@index([programId])
+  @@index([weekNumber])
+  @@map("workout_sessions")
+}
+
+// ─── Set Logs (Core Transactional Table) ────────────────────────────
+
+model SetLog {
+  id               String   @id @default(uuid()) @db.Uuid
+  workoutSessionId String   @map("workout_session_id") @db.Uuid
+  exerciseId       String   @map("exercise_id") @db.Uuid
+  setOrder         Int      @map("set_order")
+  setType          SetType  @map("set_type")
+  targetRir        Int?     @map("target_rir")
+  completedReps    Int?     @map("completed_reps")
+  weightLbs        Decimal? @map("weight_lbs") @db.Decimal(6, 2)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  lastModifiedAt   DateTime @default(now()) @map("last_modified_at")
+  isDeleted        Boolean  @default(false) @map("is_deleted")
+
+  workoutSession WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  exercise       Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  @@index([workoutSessionId])
+  @@index([exerciseId])
+  @@map("set_logs")
+}

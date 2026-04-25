@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.expo/
+*.log
+Automated-Reporting-Front-End-V2/
+MoonriseMedical/
+bassem_crm/
+fullmoon-ai-landing/
+sara-remotion/
