@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id
+  createdAt BigInt    @map("created_at")
+  updatedAt BigInt    @map("updated_at")
+  deletedAt BigInt?   @map("deleted_at")
+
+  bodyweightLogs  BodyweightLog[]
+  workoutSessions WorkoutSession[]
+
+  @@map("users")
+}
+
+model BodyweightLog {
+  id        String    @id
+  userId    String    @map("user_id")
+  weightKg  Float     @map("weight_kg")
+  loggedAt  BigInt    @map("logged_at")
+  createdAt BigInt    @map("created_at")
+  updatedAt BigInt    @map("updated_at")
+  deletedAt BigInt?   @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([loggedAt])
+  @@map("bodyweight_logs")
+}
+
+model Exercise {
+  id          String    @id
+  name        String
+  muscleGroup String    @map("muscle_group")
+  isCompound  Boolean   @map("is_compound")
+  createdAt   BigInt    @map("created_at")
+  updatedAt   BigInt    @map("updated_at")
+  deletedAt   BigInt?   @map("deleted_at")
+
+  setLogs SetLog[]
+
+  @@index([muscleGroup])
+  @@map("exercises")
+}
+
+model Program {
+  id            String    @id
+  name          String
+  durationWeeks Int       @map("duration_weeks")
+  daysPerWeek   Int       @map("days_per_week")
+  description   String?
+  createdAt     BigInt    @map("created_at")
+  updatedAt     BigInt    @map("updated_at")
+  deletedAt     BigInt?   @map("deleted_at")
+
+  workoutSessions WorkoutSession[]
+
+  @@map("programs")
+}
+
+model WorkoutSession {
+  id          String    @id
+  userId      String    @map("user_id")
+  programId   String    @map("program_id")
+  weekNumber  Int       @map("week_number")
+  dayNumber   Int       @map("day_number")
+  daySplit    String    @map("day_split")
+  completedAt BigInt?   @map("completed_at")
+  createdAt   BigInt    @map("created_at")
+  updatedAt   BigInt    @map("updated_at")
+  deletedAt   BigInt?   @map("deleted_at")
+
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program Program   @relation(fields: [programId], references: [id], onDelete: Cascade)
+  setLogs SetLog[]
+
+  @@index([userId])
+  @@index([programId])
+  @@index([weekNumber])
+  @@map("workout_sessions")
+}
+
+model SetLog {
+  id               String    @id
+  workoutSessionId String    @map("workout_session_id")
+  exerciseId       String    @map("exercise_id")
+  setOrder         Int       @map("set_order")
+  setType          String    @map("set_type")
+  targetRir        Int?      @map("target_rir")
+  completedReps    Int?      @map("completed_reps")
+  weightKg         Float?    @map("weight_kg")
+  createdAt        BigInt    @map("created_at")
+  updatedAt        BigInt    @map("updated_at")
+  deletedAt        BigInt?   @map("deleted_at")
+
+  workoutSession WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  exercise       Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([workoutSessionId])
+  @@index([exerciseId])
+  @@map("set_logs")
+}
