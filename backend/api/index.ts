@@ -7,15 +7,11 @@ import express from 'express';
 let cachedServer: any;
 
 export default async (req: any, res: any) => {
-  if (!cachedServer) {
-    const expressApp = express();
-    const nestApp = await NestFactory.create(
-      AppModule,
-      new ExpressAdapter(expressApp),
-    );
-    
-    await nestApp.init();
-    cachedServer = serverlessExpress({ app: expressApp });
-  }
-  return cachedServer(req, res);
+  const expressApp = express();
+  const nestApp = await NestFactory.create(
+    AppModule,
+    new ExpressAdapter(expressApp),
+  );
+  await nestApp.init();
+  expressApp(req, res);
 };
