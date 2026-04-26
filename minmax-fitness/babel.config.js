@@ -3,13 +3,19 @@ module.exports = function (api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      // TypeScript must run FIRST so `declare` fields are stripped before decorator transforms
-      ['@babel/plugin-transform-typescript', { allowDeclareFields: true }],
-      // WatermelonDB decorators — must come after TypeScript transform
-      ['@babel/plugin-proposal-decorators', { legacy: true }],
-      ['@babel/plugin-proposal-class-properties', { loose: true }],
-      // Must be last
       'react-native-reanimated/plugin',
+    ],
+    overrides: [
+      {
+        // WatermelonDB models use TypeScript `declare` fields with decorators.
+        // Apply allowDeclareFields only to these files so the rest of the bundle
+        // (including expo-router's pre-compiled JS) is not affected.
+        test: /\/src\/core\/database\/models\//,
+        exclude: /node_modules/,
+        plugins: [
+          ['@babel/plugin-transform-typescript', { allowDeclareFields: true }],
+        ],
+      },
     ],
   };
 };
