@@ -72,7 +72,7 @@ export class SyncService {
 
   private async executePushTransaction(userId: string, { changes, lastPulledAt }: SyncPushDto) {
     return this.prisma.$transaction(async (tx) => {
-      for (const [table, delta] of Object.entries(changes)) {
+      for (const [table, delta] of Object.entries(changes as any)) {
         const prismaModel = this.getPrismaModel(table);
         const model = tx[prismaModel] as any;
 
@@ -86,7 +86,7 @@ export class SyncService {
             update: data,
             create: { ...data, id: record.id },
           });
-        }
+                
 
         // Handle Deleted (Soft Delete)
         if (delta.deleted && delta.deleted.length > 0) {
