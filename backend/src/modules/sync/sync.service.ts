@@ -29,15 +29,15 @@ export class SyncService {
     for (const table of tables) {
       const prismaModel = this.getPrismaModel(table);
 
-      // Query for created/updated records
+      // Query for created/updated records, scoped per table type
       const records = await (this.prisma as any)[prismaModel].findMany({
         where: {
           OR: [
             { updatedAt: { gt: lastPulledBigInt } },
             { deletedAt: { gt: lastPulledBigInt } },
           ],
-          // Filter by userId if the table has it
           ...(this.hasUserId(table) ? { userId } : {}),
+          ...(this.isUserTable(table) ? { id: userId } : {}),
         },
       });
 
@@ -143,7 +143,12 @@ export class SyncService {
   }
 
   private hasUserId(tableName: string): boolean {
-    return ['users', 'bodyweight_logs', 'workout_sessions'].includes(tableName);
+    // 'users' uses 'id' as its own identity — no separate userId FK to filter by
+    return ['bodyweight_logs', 'workout_sessions'].includes(tableName);
+  }
+
+  private isUserTable(tableName: string): boolean {
+    return tableName === 'users';
   }
 
   private formatRecordForClient(record: any) {
@@ -161,7 +166,7 @@ export class SyncService {
     const data = { ...record };
     delete data.id; // ID handled by upsert where/create
 
-    // Enforce userId on specific tables
+    // Enforce userId FK on tables that reference users
     if (this.hasUserId(table)) {
       data.userId = userId;
     }
