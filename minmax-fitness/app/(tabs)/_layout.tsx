@@ -11,16 +11,16 @@
 
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { View, StyleSheet, type ViewStyle } from 'react-native';
+import { Text, View, StyleSheet, type ViewStyle } from 'react-native';
 
-import { colors, spacing, radii, fontSizes, fontWeights } from '@ui/theme';
+import { colors, radii, fontSizes, fontWeights } from '@ui/theme';
 
-/**
- * Custom tab bar icon wrapper.
- * Uses simple unicode glyphs instead of icon libraries to maintain
- * zero external dependencies during the primitive validation phase.
- * Will be replaced with a custom icon set in Phase 3.
- */
+const TAB_GLYPHS: Record<string, string> = {
+  dashboard: '⬛',  // filled square → "home/board"
+  history: '📋',
+  profile: '◉',
+};
+
 function TabIcon({
   glyph,
   focused,
@@ -32,24 +32,16 @@ function TabIcon({
     width: 40,
     height: 32,
     borderRadius: radii.pill,
-    backgroundColor: focused ? colors.interactivePrimary : 'transparent',
+    backgroundColor: focused ? (colors.interactivePrimary ?? colors.accentPR) : 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   };
 
   return (
     <View style={containerStyle}>
-      <View>
-        {/* Using a View + text since Typography needs theme hook context */}
-        <View
-          style={{
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          {/* Placeholder glyph — will be replaced by icon component */}
-        </View>
-      </View>
+      <Text style={{ fontSize: 16, color: focused ? colors.textPrimary : colors.textTertiary }}>
+        {glyph}
+      </Text>
     </View>
   );
 }
@@ -81,6 +73,9 @@ export default function TabLayout(): React.ReactElement {
         options={{
           title: 'Dashboard',
           tabBarLabel: 'Dashboard',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon glyph={TAB_GLYPHS['dashboard'] ?? '⬛'} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -88,6 +83,9 @@ export default function TabLayout(): React.ReactElement {
         options={{
           title: 'History',
           tabBarLabel: 'History',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon glyph={TAB_GLYPHS['history'] ?? '📋'} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -95,6 +93,9 @@ export default function TabLayout(): React.ReactElement {
         options={{
           title: 'Profile',
           tabBarLabel: 'Profile',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon glyph={TAB_GLYPHS['profile'] ?? '◉'} focused={focused} />
+          ),
         }}
       />
     </Tabs>

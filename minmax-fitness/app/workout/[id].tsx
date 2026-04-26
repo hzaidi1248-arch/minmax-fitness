@@ -73,11 +73,13 @@ export default function WorkoutSessionScreen(): React.ReactElement {
         // Load exercises for this session (for this demo, we'll just track active exercises locally)
         // In a real app, we'd query SetLogs and extract unique Exercise IDs
         const setLogs = await sessionRecord.setLogs.fetch();
-        const exerciseIds = Array.from(new Set(setLogs.map(s => s.exerciseId)));
+        const exerciseIds: string[] = Array.from(
+          new Set((setLogs as Array<{ exerciseId: string }>).map((s) => s.exerciseId))
+        );
         
         if (exerciseIds.length > 0) {
           const exercisesList = await database.get<Exercise>(TableName.EXERCISES)
-            .query(Q.where('id', Q.oneOf(exerciseIds)))
+            .query(Q.where('id', Q.oneOf(exerciseIds as string[])))
             .fetch();
           if (isMounted) setExercises(exercisesList);
         }

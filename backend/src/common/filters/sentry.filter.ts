@@ -1,20 +1,21 @@
 import { Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
-import * as Sentry from '@sentry/node';
+
+/** Sentry SDK is optional — only imported if available at runtime. */
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const Sentry: { captureException?: (e: unknown) => void } = (() => {
+  try { return require('@sentry/node'); } catch { return {}; }
+})();
 
 @Catch()
 export class SentryFilter extends BaseExceptionFilter {
-  catch(exception: any, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse();
-
-    // Report 500 errors to Sentry
-    const status = 
+  catch(exception: unknown, host: ArgumentsHost) {
+    const status =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    if (status >= 500) {
+    if (status >= 500 && Sentry.captureException) {
       Sentry.captureException(exception);
     }
 

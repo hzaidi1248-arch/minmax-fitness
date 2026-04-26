@@ -1,31 +1,36 @@
 /**
  * @module app/profile
- * @description Profile screen stub.
- * Displays user stats, bodyweight trend, and settings.
- *
- * This is a Phase 2 placeholder — full implementation in Phase 3.
+ * @description Full-screen profile pushed from the stack navigator.
+ * Shows the same content as the tab profile: bodyweight tracking + data export.
  */
 
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@ui/theme';
 import { Typography } from '@ui/primitives';
+import BodyweightTracker from '@features/profile/components/BodyweightTracker';
+import { exportDatabaseToJson } from '@core/database/export';
 
 export default function ProfileScreen(): React.ReactElement {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.content}>
-        <Typography variant="h1">Profile</Typography>
-        <View style={styles.spacer} />
-        <Typography variant="body">
-          Bodyweight trend, PR history, and settings.
-        </Typography>
-        <Typography variant="caption">
-          Phase 2 scaffold. Full implementation pending.
-        </Typography>
-      </View>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <Typography variant="h1">Profile</Typography>
+        </View>
+
+        <BodyweightTracker />
+
+        <View style={styles.section}>
+          <Typography variant="h2" style={{ marginBottom: spacing['4'] }}>Settings</Typography>
+
+          <Pressable style={styles.exportButton} onPress={exportDatabaseToJson}>
+            <Typography variant="bodyStrong">Export Data (JSON)</Typography>
+          </Pressable>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -36,11 +41,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundPrimary,
   },
   content: {
-    flex: 1,
     paddingHorizontal: spacing['4'],
     paddingTop: spacing['6'],
+    paddingBottom: spacing['10'],
   },
-  spacer: {
-    height: spacing['3'],
+  header: {
+    marginBottom: spacing['8'],
+  },
+  section: {
+    marginTop: spacing['4'],
+  },
+  exportButton: {
+    backgroundColor: colors.backgroundElevated,
+    padding: spacing['4'],
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
   },
 });

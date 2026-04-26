@@ -28,9 +28,9 @@ export class SyncService {
 
     for (const table of tables) {
       const prismaModel = this.getPrismaModel(table);
-      
+
       // Query for created/updated records
-      const records = await (this.prisma[prismaModel] as any).findMany({
+      const records = await (this.prisma as any)[prismaModel].findMany({
         where: {
           OR: [
             { updatedAt: { gt: lastPulledBigInt } },
@@ -70,23 +70,24 @@ export class SyncService {
     return this.withRetry(() => this.executePushTransaction(userId, syncPushDto));
   }
 
-  private async executePushTransaction(userId: string, { changes, lastPulledAt }: SyncPushDto) {
+  private async executePushTransaction(userId: string, { changes }: SyncPushDto) {
     return this.prisma.$transaction(async (tx) => {
-      for (const [table, delta] of Object.entries(changes as any)) {
+      for (const [table, deltaUnknown] of Object.entries(changes as Record<string, any>)) {
+        const delta = deltaUnknown as { created?: any[]; updated?: any[]; deleted?: string[] };
         const prismaModel = this.getPrismaModel(table);
-        const model = tx[prismaModel] as any;
+        const model = (tx as any)[prismaModel] as any;
 
         // Handle Created/Updated
         const allUpserts = [...(delta.created || []), ...(delta.updated || [])];
         for (const record of allUpserts) {
           const data = this.formatRecordForServer(record, table, userId);
-          
+
           await model.upsert({
             where: { id: record.id },
             update: data,
             create: { ...data, id: record.id },
           });
-                
+        }
 
         // Handle Deleted (Soft Delete)
         if (delta.deleted && delta.deleted.length > 0) {

@@ -17,6 +17,7 @@ import { StyleSheet } from 'react-native';
 import { colors } from '@ui/theme';
 import { BreadcrumbHeader } from '@ui/components';
 import { registerBackgroundSync } from '@services/backgroundSync';
+import { useAuthStore } from '@core/auth/authStore';
 
 /**
  * Root layout component.
@@ -25,9 +26,12 @@ import { registerBackgroundSync } from '@services/backgroundSync';
  * with hidden native headers and dark background.
  */
 export default function RootLayout(): React.ReactElement {
+  const loadToken = useAuthStore((s) => s.loadToken);
+
   useEffect(() => {
+    void loadToken();
     void registerBackgroundSync();
-  }, []);
+  }, [loadToken]);
 
   return (
     <GestureHandlerRootView style={styles.root}>

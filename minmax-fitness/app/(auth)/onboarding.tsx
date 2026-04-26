@@ -15,9 +15,6 @@ import Animated, {
   useSharedValue, 
   useAnimatedStyle, 
   withSpring,
-  interpolateColor,
-  useDerivedValue,
-  withTiming
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
@@ -96,8 +93,32 @@ export default function OnboardingScreen(): React.ReactElement {
         });
       });
 
-      // 3. Set Auth Token (dummy for now until backend is connected)
-      await setToken('dummy-jwt-token-from-onboarding');
+      // 3. Register user on the server and get a real JWT
+      //    The userId from WatermelonDB is used as the server-side identity.
+      const users = await database.get<User>(TableName.USERS).query().fetch();
+      const userId = users[0]?.id ?? '';
+
+      let jwtToken = '';
+      try {
+        const authBaseUrl = process.env.EXPO_PUBLIC_SYNC_API_URL
+          ? process.env.EXPO_PUBLIC_SYNC_API_URL.replace('/sync', '')
+          : 'https://minmax-fitness.vercel.app';
+
+        const res = await fetch(`${authBaseUrl}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId }),
+        });
+
+        if (res.ok) {
+          const data = await res.json() as { token: string };
+          jwtToken = data.token;
+        }
+      } catch {
+        // Network unavailable — store empty token and sync will work once online
+      }
+
+      await setToken(jwtToken || `offline-${userId}`);
 
       // Index route handles redirect to dashboard automatically via useAuthStore
       router.replace('/');

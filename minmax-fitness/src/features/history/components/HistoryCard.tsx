@@ -31,7 +31,20 @@ function HistoryCard({ session, setLogs, onPress }: HistoryCardProps): React.Rea
   const totalSets = setLogs.length;
   const totalVolumeKg = setLogs.reduce((acc, set) => acc + ((set.weightKg ?? 0) * (set.completedReps ?? 0)), 0);
 
-  const dateString = session.completedAt ? format(new Date(session.completedAt), 'MMM d, yyyy - h:mm a') : 'In Progress';
+  const dateString = session.completedAt
+    ? format(new Date(session.completedAt), 'MMM d, yyyy - h:mm a')
+    : 'In Progress';
+
+  const durationString = (() => {
+    if (!session.completedAt || !session.createdAt) return '—';
+    const diffMs = new Date(session.completedAt).getTime() - new Date(session.createdAt).getTime();
+    if (diffMs <= 0) return '—';
+    const totalMins = Math.round(diffMs / 60_000);
+    if (totalMins < 60) return `${totalMins}m`;
+    const hrs = Math.floor(totalMins / 60);
+    const mins = totalMins % 60;
+    return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+  })();
 
   return (
     <Pressable style={styles.card} onPress={onPress}>
@@ -53,8 +66,7 @@ function HistoryCard({ session, setLogs, onPress }: HistoryCardProps): React.Rea
         </View>
         <View style={styles.statBox}>
           <Typography variant="label" color="tertiary">DURATION</Typography>
-          {/* Mock duration since we don't track exact start/end yet */ }
-          <Typography variant="h3">45m</Typography>
+          <Typography variant="h3">{durationString}</Typography>
         </View>
       </View>
     </Pressable>

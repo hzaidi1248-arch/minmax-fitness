@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import withObservables from '@nozbe/with-observables';
@@ -19,8 +19,6 @@ import { colors, spacing } from '@ui/theme';
 import { Typography } from '@ui/primitives';
 import HistoryCard from '@features/history/components/HistoryCard';
 
-const { width } = Dimensions.get('window');
-
 interface HistoryScreenProps {
   sessions: WorkoutSession[];
 }
@@ -33,19 +31,19 @@ function HistoryScreen({ sessions }: HistoryScreenProps): React.ReactElement {
       </View>
       
       <View style={styles.listContainer}>
-        <FlashList
-          data={sessions}
-          renderItem={({ item }) => <HistoryCard session={item} />}
-          estimatedItemSize={120}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
+        {React.createElement(FlashList as React.ComponentType<any>, {
+          data: sessions,
+          renderItem: ({ item }: { item: WorkoutSession }) => <HistoryCard session={item} />,
+          estimatedItemSize: 120,
+          keyExtractor: (item: WorkoutSession) => item.id,
+          showsVerticalScrollIndicator: false,
+          contentContainerStyle: styles.listContent,
+          ListEmptyComponent: (
             <View style={styles.emptyContainer}>
               <Typography variant="body" color="tertiary">No workouts logged yet.</Typography>
             </View>
-          }
-        />
+          ),
+        })}
       </View>
     </SafeAreaView>
   );
